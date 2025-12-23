@@ -2,15 +2,21 @@
 Trolley Preventive Maintenance (PM) Application
 -----------------------------------------------
 
-Author: YOUR_NAME_HERE
-Created: 2025-11-24
-Last Updated: 2025-11-24
-License: Internal use (Plant Maintenance)
+Author: Yash Aparajit
+Created: 24-11-2025
+Last Updated: 23-12-2025
+License: Proprietary-demonstration & portfolio use only
 
 Overview
 ========
 This Streamlit application is managing Preventive Maintenance (PM), damage
 reporting, and lifecycle tracking for material handling trolleys in a plant.
+
+⚠ Demo Notes
+- Uses temporary SQLite database
+- Data resets on redeploy / inactivity
+- Designed for single-user demonstration
+- No authentication layer
 
 The app is providing:
     - A dashboard that is showing:
@@ -83,7 +89,6 @@ from io import BytesIO
 DB_PATH = "pm_demo.db"
 PM_INTERVAL_DAYS = 90          # 3 months
 ALERT_THRESHOLD = 3            # repeated failure count
-SCREENSHOT_PATH = "/mnt/data/Screenshot 2025-11-24 100049.png"  # optional preview image
 
 # This call is configuring the Streamlit page
 st.set_page_config(page_title="Trolley PM", layout="wide")
@@ -663,14 +668,6 @@ st.sidebar.markdown("---")
 st.sidebar.button(f"💾 {t('btn_backup')}", on_click=lambda: st.session_state.update({"page": "backup_restore"}))
 st.sidebar.button(f"🔙 {t('btn_back_home')}", on_click=lambda: st.session_state.update({"page": "home"}))
 
-# This block is optionally showing a reference screenshot in sidebar
-if os.path.exists(SCREENSHOT_PATH):
-    st.sidebar.markdown("---")
-    try:
-        st.sidebar.image(SCREENSHOT_PATH, use_column_width=True)
-    except Exception:
-        st.sidebar.markdown(f"Screenshot path: `{SCREENSHOT_PATH}`")
-
 # ----------------------------
 # This section is rendering the HOME dashboard
 # ----------------------------
@@ -950,6 +947,48 @@ elif st.session_state.page == "scrap":
 
     st.markdown("</div>", unsafe_allow_html=True)   # form-card
     st.markdown("</div>", unsafe_allow_html=True)   # page-bg-scrap
+
+# ----------------------------
+# This section is rendering the REGISTER NEW TROLLEY form
+# ----------------------------
+elif st.session_state.page == "register":
+    st.markdown('<div class="page-bg-form">', unsafe_allow_html=True)
+    st.markdown('<div class="form-card">', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="form-header">{t("page_register")}</div>',
+        unsafe_allow_html=True,
+    )
+
+    # Basic inputs
+    new_id = st.text_input("New trolley ID (e.g. TRL-020):", key="reg_new")
+    add_note = st.text_input("Note (location / usage):", key="reg_note")
+    st.caption("Use this when a completely new trolley enters the system.")
+
+    cols = st.columns([4, 1])
+    with cols[0]:
+        if st.button("Add trolley to registry"):
+            if not new_id.strip():
+                st.error("Enter a trolley ID to add.")
+            else:
+                register_trolley(
+                    None,
+                    new_id.strip(),
+                    "ADD",
+                    add_note.strip() or None,
+                )
+                st.success(f"Registered new trolley {new_id.strip()}.")
+                st.session_state.page = "home"
+                st.rerun()
+
+    with cols[1]:
+        st.markdown("<div class='right-back'>", unsafe_allow_html=True)
+        if st.button(t("btn_back_home")):
+            st.session_state.page = "home"
+            st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)   # form-card
+    st.markdown("</div>", unsafe_allow_html=True)   # page-bg-form
 
 # ----------------------------
 # This section is rendering the MODIFY / REMAP TROLLEY ID form
@@ -1467,6 +1506,11 @@ elif st.session_state.page == "backup_restore":
     st.markdown('<div class="page-bg-form">', unsafe_allow_html=True)
     st.markdown('<div class="form-card">', unsafe_allow_html=True)
     st.markdown(f'<div class="form-header">{t("page_backup")}</div>', unsafe_allow_html=True)
+
+    st.warning(
+        "Demo mode: This database contains temporary sample data.\n"
+        "Any restore or changes will reset when the app restarts."
+    )
 
     st.info(
         "Download the current database file (`pm_demo.db`) as a backup.\n"
