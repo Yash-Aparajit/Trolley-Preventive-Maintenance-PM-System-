@@ -1,6 +1,3 @@
 streamlit
 pandas
 openpyxl
-pyarrow
-altair
-sqlite3-binary
